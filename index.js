@@ -1,5 +1,6 @@
 const fs = require('fs-extra')
 const request = require('superagent') // 引入SuperAgent
+const path = require('path')
 require('superagent-proxy')(request)
 const spData = [{
 	"mid": "3338",
@@ -4082,32 +4083,66 @@ for (let i = 0; i < spData.length; i++) {
 			})
 		}
 
-		// get_req(domainUrl, {
-		// 	chapter: i,
-		// 	fileName: j
-		// }, () => {
-		// 	itemNum++;
-		// 	if (itemNum === items.length) {
-		// 		chapterNum++
-		// 		console.log(spData[i].title + "完成")
-		// 		console.log(chapterNum)
-		// 		console.log(spData.length)
-		// 		if (chapterNum === spData.length) {
-		// 			// 至此，所有url已经扒干净，开始扒资源
-		// 			// fs.outputFile(__dirname + '/output.js', JSON.stringify(fileList)).then(() => {
-		// 			// 	console.log("ok!")
-		// 			// }).catch((e) => {
-		// 			// 	console.log(e)
-		// 			// })
-		// 			fs.ensureDir(resourcesDir).then(() => {
-		// 				downloadFile('http://pmat.36ve.com:81/zyk/sites/default/files/mat_resource/chan_zhi_cao_zuo_wen_dang_fu_jian_.docx')
-		// 			}).catch((e) => {
+		get_req(domainUrl, {
+			chapter: i,
+			fileName: j
+		}, () => {
+			itemNum++;
+			if (itemNum === items.length) {
+				chapterNum++
+				console.log(spData[i].title + "完成")
+				console.log(chapterNum)
+				console.log(spData.length)
+				if (chapterNum === spData.length) {
+					// 至此，所有url已经扒干净，开始扒资源
+					// fs.outputFile(__dirname + '/output.js', JSON.stringify(fileList)).then(() => {
+					// 	console.log("ok!")
+					// }).catch((e) => {
+					// 	console.log(e)
+					// })
 
-		// 			})
-		// 		}
-		// 	}
-		// })
+					for (let i = 0; i < fileList.length; i++) {
+
+						let dirName = resourcesDir + '/' + fileList[i].chapterName
+						fs.ensureDir(dirName).then(() => {
+							let currentNum = 0
+							let t = downloadFile(fileList[i].items)
+							let re = t.next().value
+							let pos = path.extname(re.url)
+							let writeStream = fs.createWriteStream(dirName + '/' + fileList[i].items[currentNum].fileName + pos);
+							re.pipe(writeStream)
+							let data = {
+								i: i,
+								currentNum: 0,
+								dirName: dirName
+							}
+							writeStream.on('finish', () => {
+								saveFiles(t, data)
+							})
+						}).catch((e) => {
+
+						})
+					}
+				}
+			}
+		})
 	}
+}
+
+function saveFiles(t, data) {
+	data.currentNum++;
+	let gen = t.next()
+	if (gen.done) {
+		return
+	}
+	let re = gen.value
+	let pos = path.extname(re.url)
+	let writeStream = fs.createWriteStream(data.dirName + '/' + fileList[data.i].items[data.currentNum].fileName + pos);
+	re.pipe(writeStream)
+	writeStream.on('finish', () => {
+		console.log(fileList[data.i].items[data.currentNum].fileName + pos + '下载完成！')
+		saveFiles(t, data)
+	})
 }
 
 function get_req(url, data, callback) {
@@ -4147,16 +4182,15 @@ function get_req(url, data, callback) {
 
 let t = downloadFile()
 
-function* downloadFile() {
-	for (let i = 0; i < 10;i++) {
-		// let writeStream = fs.createWriteStream(resourcesDir + '/chan_zhi_cao_zuo_wen_dang_fu_jian_' + i + '.docx');
-		yield request.get('http://pmat.36ve.com:81/zyk/sites/default/files/mat_resource/chan_zhi_cao_zuo_wen_dang_fu_jian_.docx');
-		// req.pipe(writeStream);
-		// writeStream.on('finish', ()=>{
-		// 	console.log(i)
-		// 	 i;
-		// })	
+function* downloadFile(list) {
+	for (let i = 0; i < list.length; i++) {
+		yield request.get(list[i].url)
+			.set('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36')
+			// req.pipe(writeStream);
+			// writeStream.on('finish', ()=>{
+			// 	console.log(i)
+			// 	 i;
+			// })	
 	}
 	return
 }
-console.log(t.next())
