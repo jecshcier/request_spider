@@ -4095,14 +4095,7 @@ for (let i = 0; i < spData.length; i++) {
 				console.log(spData.length)
 				if (chapterNum === spData.length) {
 					// 至此，所有url已经扒干净，开始扒资源
-					// fs.outputFile(__dirname + '/output.js', JSON.stringify(fileList)).then(() => {
-					// 	console.log("ok!")
-					// }).catch((e) => {
-					// 	console.log(e)
-					// })
-
 					for (let i = 0; i < fileList.length; i++) {
-
 						let dirName = resourcesDir + '/' + fileList[i].chapterName
 						fs.ensureDir(dirName).then(() => {
 							let currentNum = 0
@@ -4120,7 +4113,7 @@ for (let i = 0; i < spData.length; i++) {
 								saveFiles(t, data)
 							})
 						}).catch((e) => {
-
+							console.log(e)
 						})
 					}
 				}
