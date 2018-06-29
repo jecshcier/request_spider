@@ -9,8 +9,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
     "fs-extra": "^6.0.1",
     "superagent": "^3.8.3",
+    "superagent-charset": "^1.2.0",
     "superagent-proxy": "^1.0.3"
   }
 }
